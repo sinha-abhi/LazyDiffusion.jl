@@ -1,0 +1,4 @@
+name = "LazyDiffusion"
+uuid = "673f0deb-a8a5-450b-933f-c8f9a09d35eb"
+authors = ["Abhi Sinha <sinha45@purdue.edu>"]
+version = "0.1.0"
