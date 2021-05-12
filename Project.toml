@@ -1,4 +1,9 @@
-name = "LazyDiffusion"
-uuid = "673f0deb-a8a5-450b-933f-c8f9a09d35eb"
+name = "LazyDiffusions"
+uuid = "2349c90f-2cbc-4ecf-822e-5ec8a761b5e9"
 authors = ["Abhi Sinha <sinha45@purdue.edu>"]
 version = "0.1.0"
+
+[deps]
+KahanSummation = "8e2b3108-d4c1-50be-a7a2-16352aec75c3"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"

@@ -1,4 +1,4 @@
-Lazy p-norm Diffusion
+LazyDiffusions.jl
 =====================
 
 We want [this](https://arxiv.org/abs/2006.08569) using an idea like

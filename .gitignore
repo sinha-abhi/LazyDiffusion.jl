@@ -1,2 +1,6 @@
 *.*.swp
+
 src/misc/
+notebooks/
+
+Manifest.toml
