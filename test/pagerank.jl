@@ -10,7 +10,7 @@ using SparseArrays
   x = pagerank(A, opts)
   @test norm(x-vn, 1) <= n*eps(Float64)
 
-  opts = PROptions{eltype(A)}(n=n, v=v, x0=v)
+  opts.x0 = v
   x = pagerank(A, opts)
   @test norm(x-vn, 1) <= n*eps(Float64)
 end
