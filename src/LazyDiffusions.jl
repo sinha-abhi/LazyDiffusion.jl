@@ -7,12 +7,15 @@ using SparseArrays
 import LinearAlgebra: checksquare
 import KahanSummation as KS
 
-include("pagerank.jl")
+MatrixUnion{T} = Union{SparseMatrixCSC{T}, Array{T}} where T
+VectorUnion{T} = Union{SparseVector{T}, Vector{T}} where T
 
+
+include("pagerank.jl")
 include("utils.jl")
 
 export
-  PRProblem,
+  PROptions,
   pagerank
 
 end # module

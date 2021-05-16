@@ -5,54 +5,88 @@ baremodule PRAlgs
 using Base: @enum
 
 @enum PRAlg begin
-  STANDARD
+  POWER 
+  APPROX 
 end
+end # baremodule
 
-end
-
-struct PRProblem{T}
-  A::Union{SparseMatrixCSC{T}, Array{T}}
-  α::T
-  v::Union{SparseVector{T}, Vector{T}}
+"""
+PROptions
+  n: PageRank problem size
+  α: teleporation parameter
+  tol: stopping tolerance
+  v: preference (or personalization vector)
+  maxiter: maximum number of iterations
+  x0: initial vector
+  alg: algorithm type
+  approx_bp: boundary probability to expand
+  approx_subiter: number of subiterations of power iterations
+"""
+Base.@kwdef mutable struct PROptions{T}
   n::Int
+  α::Float64                           = 0.85
+  tol::Float64                         = 1e-7
+  v::VectorUnion{T}                    = ones(n)/n
+  maxiter::Int                         = 500
+  x0::VectorUnion{T}                   = deepcopy(v)
+  alg::PRAlgs.PRAlg                    = PRAlgs.POWER
+  approx_bp::Float64                   = 1e-3
+  approx_boundary::Union{Int, Float64} = Inf
+  approx_subiter::Int                  = 5
 end
 
-function PRProblem{T}(
-  A::Union{SparseMatrixCSC{T}, Array{T}}, 
-  α::T, 
-  v::Union{SparseVector{T}, Vector{T}}
-) where T
+function pagerank(A::MatrixUnion{T}, opts::PROptions) where T
   checksquare(A)
-  A.n == length(v) || throw(DimensionMismatch(
-    "expected v of length $(A.n), but got $(length(v))"
+  A.n == length(opts.v) || throw(DimensionMismatch(
+    "expected v of length $(A.n), but got $(length(opts.v))"
   ))
-  0 <= α < 1 || throw(DimensionMismatch("expected α ∈ [0,1), but got α = $α"))
+  0 <= opts.α < 1 || throw(DimensionMismatch("expected α ∈ [0,1), but got α = $(opts.α)"))
 
-  PRProblem{T}(A, α, v, A.m)
-end
+  P = outdegree_pinv(A) * A # normalize A
 
-function pagerank(
-  p::PRProblem{T}; 
-  alg::PRAlgs.PRAlg, maxiter=10000, tol=1e-7
-) where T
-  alg == PRAlgs.STANDARD && standard_pagerank(p, maxiter, tol)
+  opts.alg == PRAlgs.POWER && return power_pagerank(P, opts)
+  opts.alg == PRAlgs.APPROX && return approx_pagerank(P, opts)
 end
 
 ## pagerank variations
 
-function standard_pagerank(p::PRProblem{T}, maxiter, tol) where T
-  P = outdegree_pinv(p.A) * p.A # normalize A
-  v = normalized_v(p.v) # get normalized v
-  x = deepcopy(v)
-  y = Vector{T}(undef, p.n)
+# power method for pagerank
+function power_pagerank(P::MatrixUnion{T}, opts::PROptions{T}) where T
+  x = deepcopy(opts.x0)
+  α = opts.α
+  v = normalize_pref_vec(opts.v) # get normalized v
+  tol = opts.tol
+  maxiter = opts.maxiter
+
+  y = Vector{T}(undef, length(x))
   for iter = 1 : maxiter
-    y = p.α*(x'*P)'
+    y = α*(x'*P)'
     ω = 1 - KS.sum_kbn(y)
-    y = ω*v + y
+    axpy!(ω, v, y)
     δ = normdiff(x, y)
     x = y
     δ < tol && break
   end
 
   x
+end
+
+# approximate pagerank
+function approx_pagerank(P::MatrixUnion{T}, opts::PROptions{T}) where T
+  # find the seed pages
+  p = findall(!iszero, v)
+  nnz = length(p)
+  x = ones(nnz) / nnz
+
+  loc = Int[]
+  active = p
+  frontier = p
+  for iter = 1 : maxiter
+    # TODO: finish implementing
+    # sp = sortperm(-x)
+
+    δ < tol && break
+  end
+
+  nothing
 end

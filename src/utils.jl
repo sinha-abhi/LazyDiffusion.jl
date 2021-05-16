@@ -21,8 +21,7 @@ end
 Compute the pseudo-inverse (from GvL) of the out-degree matrix of the graph 
 defined by A.
 """
-# TODO: split outdegree_pinv into two functions for: spare and dense
-function outdegree_pinv(A::Union{SparseMatrixCSC{T}, Array{T}}) where T
+function outdegree_pinv(A::MatrixUnion{T}) where T
   d = Vector{T}(undef, min(size(A)...))
   sum!(d, A)
   @simd for i = 1 : length(d)
@@ -41,7 +40,7 @@ end
 """
 Normalize the sum of v to 1.
 """
-function normalized_v(v::Vector{T}) where T
+function normalize_pref_vec(v::Vector{T}) where T
   _v = deepcopy(v)
   vsum = 1.0/KS.sum_kbn(_v)
   @inbounds for i in eachindex(_v)
@@ -51,7 +50,7 @@ function normalized_v(v::Vector{T}) where T
   _v
 end
 
-function normalized_v(v::SparseVector{T}) where T
+function normalize_pref_vec(v::SparseVector{T}) where T
   _v = deepcopy(v)
   nzv = nonzeros(_v)
   vsum = 1.0/KS.sum_kbn(nzv)

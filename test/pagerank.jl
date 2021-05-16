@@ -6,7 +6,11 @@ using SparseArrays
   A = sparse(1.0I, n, n)
   v = rand(n)
   vn = v / sum(v)
-  p = PRProblem{Float64}(A, 0.85, v)
-  x = pagerank(p, alg=PRAlgs.STANDARD)
+  opts = PROptions{eltype(A)}(n=n, v=v)
+  x = pagerank(A, opts)
+  @test norm(x-vn, 1) <= n*eps(Float64)
+
+  opts = PROptions{eltype(A)}(n=n, v=v, x0=v)
+  x = pagerank(A, opts)
   @test norm(x-vn, 1) <= n*eps(Float64)
 end
