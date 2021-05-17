@@ -2,8 +2,7 @@
 
 """
 Compute the 1-norm of the difference of two vectors with compensated summation.
-
-  |y - x|_1
+Equivalent to norm(x-y, 1), but more accurate.
 """
 function normdiff(x::AbstractVector{T}, y::AbstractVector{T}) where T
   s, z, e, t = zero(T), zero(T), zero(T), zero(T)
@@ -59,5 +58,34 @@ function normalize_pref_vec(v::SparseVector{T}) where T
   end
 
   _v
+end
+
+"""
+Compute the inverse of all nonzero elements in v.
+"""
+function invzero(v::Vector{T}) where T
+  n = length(v)
+  invv = Vector{T}(undef, n)
+  @simd for i = 1 : n
+    if v[i] > zero(T)
+      @inbounds invv[i] = one(T) / v[i]
+    else
+      invv[i] = zero(T)
+    end
+  end
+
+  invv
+end
+
+function invzero(v::SparseVector{T}) where T
+  nz_ind = findall(!iszero, v)
+  nnz = length(nz_ind)
+  invv = Vector{T}(undef, nnz)
+
+  for (i, nzind) in enumerate(nz_ind)
+    @inbounds invv[i] = one(T) / v[nzind]
+  end
+
+  sparsevec(nz_ind, invv, length(v))
 end
 

@@ -26,7 +26,7 @@ Base.@kwdef mutable struct PROptions{T}
   n::Int
   α::Float64                           = 0.85
   tol::Float64                         = 1e-7
-  v::VectorUnion{T}                    = ones(n)/n
+  v::VectorUnion{T}                    = ones(T, n)/n
   maxiter::Int                         = 500
   x0::VectorUnion{T}                   = deepcopy(v)
   alg::PRAlgs.PRAlg                    = PRAlgs.POWER
@@ -73,20 +73,72 @@ end
 
 # approximate pagerank
 function approx_pagerank(P::MatrixUnion{T}, opts::PROptions{T}) where T
+  α = opts.α
+  v = normalize_pref_vec(opts.v)
+  n = opts.n
+  tol = opts.tol
+  maxiter = opts.maxiter
+  subiter = opts.approx_subiter
+  bp = opts.approx_bp
+  boundary = opts.approx_boundary
+
   # find the seed pages
   p = findall(!iszero, v)
   nnz = length(p)
-  x = ones(nnz) / nnz
+  x = ones(T, nnz) / nnz
 
   loc = Int[]
   active = p
   frontier = p
   for iter = 1 : maxiter
-    # TODO: finish implementing
-    # sp = sortperm(-x)
+    local y
 
+    if boundary == 1
+      sp = sortperm(-x)
+      cs = cumsum(x[sp])
+      spactive = active[sp]
+      allexpand_ind = cs .< (1-bp)
+
+      # include the first 0 since we want cs > 1-bp
+      allexpand_ind[findfirst(iszero, allexpand_ind)] = 1
+      allexpand = spactive[allexpand_ind]
+      toexapnd = setdiff(allexpand, loc)
+    else
+      # expand all pages with sufficient tolerance
+      allexpand = active[x .> bp]
+      toexpand = setdiff(allexpand, loc)
+    end
+
+    xp = zeros(n)
+    xp[[loc; frontier]] = x
+    if length(toexpand) > 0
+      loc = [loc; toexpand]
+      nzls = LinearIndices(findall(!iszero, sum(P[loc,:], dims=1)))
+      frontier = setdiff(nzls, loc)
+      active = [loc; frontier]
+    else
+      x = xp[loc]
+    end
+
+    Lp = P[loc, active]
+    outdegree = sum(Lp, dims=2)
+    outdegree = [outdegree; zeros(T, length(frontier))]
+
+    L = [Lp; spzeros(length(frontier), length(active))]
+    x2 = [x; xp[frontier]]
+    for siter = 1 : subiter
+      y = α*L'*(invzero(vec(outdegree)) .* x2)
+      ω = 1 - KS.sum_kbn(y)
+
+      y[1:length(p)] = y[1:length(p)] + ω*v
+      x2 = y
+    end
+
+    x2 = [x; xp[frontier]]
+    δ = normdiff(y, x2)
+    x = y
     δ < tol && break
   end
 
-  nothing
+  x
 end

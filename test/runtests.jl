@@ -3,4 +3,7 @@ using Test
 using LazyDiffusions
 using LazyDiffusions.PRAlgs
 
-include("pagerank.jl")
+@testset verbose=true "LazyDiffusions" begin
+  include("pagerank.jl")
+  include("utils.jl")
+end
