@@ -22,7 +22,7 @@ PROptions
   approx_bp: boundary probability to expand
   approx_subiter: number of subiterations of power iterations
 """
-Base.@kwdef mutable struct PROptions{T}
+Base.@kwdef mutable struct PROptions{T <: Real}
   n::Int
   α::Float64                           = 0.85
   tol::Float64                         = 1e-7
@@ -35,7 +35,12 @@ Base.@kwdef mutable struct PROptions{T}
   approx_subiter::Int                  = 5
 end
 
-function pagerank(A::MatrixUnion{T}, opts::PROptions) where T
+"""
+Compute the personalized PageRank vector for a directed graph A.
+
+The out-bound edges should be represented in the rows of A.
+"""
+function pagerank(A::MatrixUnion{T}, opts::PROptions{T}) where T
   checksquare(A)
   A.n == length(opts.v) || throw(DimensionMismatch(
     "expected v of length $(A.n), but got $(length(opts.v))"
@@ -50,7 +55,7 @@ end
 
 ## pagerank variations
 
-# power method for pagerank
+# power method for personalized PageRank 
 function power_pagerank(P::MatrixUnion{T}, opts::PROptions{T}) where T
   x = deepcopy(opts.x0)
   α = opts.α
@@ -71,7 +76,9 @@ function power_pagerank(P::MatrixUnion{T}, opts::PROptions{T}) where T
   x
 end
 
-# approximate pagerank
+# approximate personalized PageRank (from Gleich and Polito)
+#   restricted personalized PageRank,
+#   boundary restricted personalized PageRank
 function approx_pagerank(P::MatrixUnion{T}, opts::PROptions{T}) where T
   α = opts.α
   v = normalize_pref_vec(opts.v)
@@ -92,13 +99,11 @@ function approx_pagerank(P::MatrixUnion{T}, opts::PROptions{T}) where T
   frontier = p
   for iter = 1 : maxiter
     local y
-
     if boundary == 1
       sp = sortperm(-x)
       cs = cumsum(x[sp])
       spactive = active[sp]
       allexpand_ind = cs .< (1-bp)
-
       # include the first 0 since we want cs > 1-bp
       allexpand_ind[findfirst(iszero, allexpand_ind)] = 1
       allexpand = spactive[allexpand_ind]
@@ -129,7 +134,6 @@ function approx_pagerank(P::MatrixUnion{T}, opts::PROptions{T}) where T
     for siter = 1 : subiter
       y = α*L'*(invzero(vec(outdegree)) .* x2)
       ω = 1 - KS.sum_kbn(y)
-
       y[1:length(p)] = y[1:length(p)] + ω*v
       x2 = y
     end

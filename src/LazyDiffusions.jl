@@ -7,9 +7,8 @@ using SparseArrays
 import LinearAlgebra: checksquare
 import KahanSummation as KS
 
-MatrixUnion{T} = Union{SparseMatrixCSC{T}, Array{T}} where T
-VectorUnion{T} = Union{SparseVector{T}, Vector{T}} where T
-
+MatrixUnion{T <: Real} = Union{SparseMatrixCSC{T}, Array{T}} where T <: Real
+VectorUnion{T <: Real} = Union{SparseVector{T}, Vector{T}} where T <: Real
 
 include("pagerank.jl")
 include("utils.jl")
