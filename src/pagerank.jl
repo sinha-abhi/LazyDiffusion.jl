@@ -127,12 +127,12 @@ function approx_pagerank(P::MatrixUnion{T}, opts::PROptions{T}) where T
 
     Lp = P[loc, active]
     outdegree = sum(Lp, dims=2)
-    outdegree = [outdegree; zeros(T, length(frontier))]
+    outdegree = vec([outdegree; zeros(T, length(frontier))])
 
     L = [Lp; spzeros(length(frontier), length(active))]
     x2 = [x; xp[frontier]]
     for siter = 1 : subiter
-      y = α*L'*(invzero(vec(outdegree)) .* x2)
+      y = α*L'*(invzero(outdegree) .* x2)
       ω = 1 - KS.sum_kbn(y)
       y[1:length(p)] = y[1:length(p)] + ω*v
       x2 = y
