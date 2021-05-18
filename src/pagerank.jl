@@ -1,4 +1,14 @@
 # Implementations of various PageRank variations
+module PageRank
+
+using LinearAlgebra
+using LinearAlgebra.BLAS
+using SparseArrays
+
+import KahanSummation as KS
+import ..LazyDiffusions: MatrixUnion, VectorUnion
+import ..LazyDiffusions: 
+  checksquare, invzero, normalize_pref_vec, normdiff, outdegree_pinv
 
 # supported PageRank variations
 baremodule PRAlgs
@@ -64,7 +74,7 @@ function power_pagerank(P::MatrixUnion{T}, opts::PROptions{T}) where T
   maxiter = opts.maxiter
 
   y = Vector{T}(undef, length(x))
-  for iter = 1 : maxiter
+  for _ = 1 : maxiter
     y = α*(x'*P)'
     ω = 1 - KS.sum_kbn(y)
     axpy!(ω, v, y)
@@ -97,7 +107,7 @@ function approx_pagerank(P::MatrixUnion{T}, opts::PROptions{T}) where T
   loc = Int[]
   active = p
   frontier = p
-  for iter = 1 : maxiter
+  for _ = 1 : maxiter
     local y
     if boundary == 1
       sp = sortperm(-x)
@@ -107,7 +117,7 @@ function approx_pagerank(P::MatrixUnion{T}, opts::PROptions{T}) where T
       # include the first 0 since we want cs > 1-bp
       allexpand_ind[findfirst(iszero, allexpand_ind)] = 1
       allexpand = spactive[allexpand_ind]
-      toexapnd = setdiff(allexpand, loc)
+      toexpand = setdiff(allexpand, loc)
     else
       # expand all pages with sufficient tolerance
       allexpand = active[x .> bp]
@@ -131,7 +141,7 @@ function approx_pagerank(P::MatrixUnion{T}, opts::PROptions{T}) where T
 
     L = [Lp; spzeros(length(frontier), length(active))]
     x2 = [x; xp[frontier]]
-    for siter = 1 : subiter
+    for _ = 1 : subiter
       y = α*L'*(invzero(outdegree) .* x2)
       ω = 1 - KS.sum_kbn(y)
       y[1:length(p)] = y[1:length(p)] + ω*v
@@ -146,3 +156,5 @@ function approx_pagerank(P::MatrixUnion{T}, opts::PROptions{T}) where T
 
   x
 end
+
+end # module

@@ -1,7 +1,7 @@
 using Test
 
 using LazyDiffusions
-using LazyDiffusions.PRAlgs
+using LazyDiffusions.PageRank.PRAlgs
 
 @testset verbose=true "LazyDiffusions" begin
   include("pagerank.jl")
