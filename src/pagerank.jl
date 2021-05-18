@@ -6,8 +6,8 @@ using LinearAlgebra.BLAS
 using SparseArrays
 
 import KahanSummation as KS
-import ..LazyDiffusions: MatrixUnion, VectorUnion
 import ..LazyDiffusions: 
+  MatrixUnion, VectorUnion,
   checksquare, invzero, normalize_pref_vec, normdiff, outdegree_pinv
 
 # supported PageRank variations
